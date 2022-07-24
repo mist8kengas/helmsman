@@ -3,6 +3,7 @@ import logger from './logger.js';
 
 export default function readCiCdExec(
     repository: string,
+    ref: string,
     type: string
 ): string | undefined {
     const jsonPath = './var/config/ci_cd.json';
@@ -15,7 +16,16 @@ export default function readCiCdExec(
         const message =
             'An error occured while trying to parse "./var/config/ci_cd.json", check for invalid syntax and run the program again. (Check error logs)';
         console.log('[helmsman]'.red, message, error);
-        throw new Error(message);
+        return 'bad_config';
     }
-    return ciCd[repository] ? ciCd[repository][type] : undefined;
+    const [, branch] = /refs\/heads\/(.*)$/.exec(ref) || [];
+    const repositoryBranch = `${repository}/${branch}`;
+
+    // do the default if there is no branch specified in the config
+    if (Object.keys(ciCd).indexOf(repositoryBranch) < 0)
+        return ciCd[repository] ? ciCd[repository][type] : undefined;
+    else
+        return ciCd[repositoryBranch]
+            ? ciCd[repositoryBranch][type]
+            : undefined;
 }

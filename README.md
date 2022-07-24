@@ -45,13 +45,14 @@ The structure of this file is:
 
 ```json
 {
-    "<username>/<repository>": {
+    "<username>/<repository>/<branch>": {
         "<event>": "<command>"
     }
 }
 ```
 
 -   `<username>/<repository>` is the full name of the repository (eg: [mist8kengas/helmsman](https://github.com/mist8kengas/helmsman))
+-   `<branch>` is the target branch in the repository. **OPTIONAL**
 -   `<event>` refers to the name of the event that triggered the webhook (eg: `ping`, `push`, `release`, etc.) [See all the possible event names here](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads)
 -   `<command>` will be executed by the program, so be careful what you put in here. Similar to command-execution via CLI (eg: `echo "Hello!"`)
 

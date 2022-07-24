@@ -52,28 +52,37 @@ router.post('/', (req, _, next) => {
 
     const ciCdExec = readCiCdExec(
         payloadBody.repository.full_name,
+        payloadBody.ref,
         githubEvent
     );
+    const repositoryBranchStr = `${payloadBody.repository.full_name}: ${payloadBody.ref}`;
     if (ciCdExec) {
-        const logMessage = `CI ${githubEvent} command for "${payloadBody.repository.full_name}" (${githubDelivery}) has been executed`;
+        if (ciCdExec == 'bad_config') {
+            const logMessage = `An error occurred while executing the ${githubEvent} command for "${repositoryBranchStr}" (${githubDelivery}): ${ciCdExec}`;
+            console.error('[server:post]'.red, '/webhook'.gray, logMessage);
+            logger(logMessage, 'error');
+            return next(500);
+        }
+
+        const logMessage = `CI ${githubEvent} command for "${repositoryBranchStr}" (${githubDelivery}) has been executed`;
         console.info('[server:post]'.green, '/webhook'.gray, logMessage);
         logger(logMessage, 'info');
 
         exec(ciCdExec, (err, _, stderr) => {
             if (err) {
-                const logMessage = `An error occurred while executing the ${githubEvent} command for "${payloadBody.repository.full_name}" (${githubDelivery}): ${stderr}`;
+                const logMessage = `An error occurred while executing the ${githubEvent} command for "${repositoryBranchStr}" (${githubDelivery}): ${stderr}`;
                 console.error('[server:post]'.red, '/webhook'.gray, logMessage);
                 logger(logMessage, 'error');
                 return;
             }
 
-            const logMessage = `CI ${githubEvent} command for "${payloadBody.repository.full_name}" (${githubDelivery}) has been executed succesfully`;
+            const logMessage = `CI ${githubEvent} command for "${repositoryBranchStr}" (${githubDelivery}) has been executed succesfully`;
             console.info('[server:post]'.green, '/webhook'.gray, logMessage);
             logger(logMessage, 'info');
         });
         next(202);
     } else {
-        const logMessage = `Tried to execute CI ${githubEvent} command for "${payloadBody.repository.full_name}" (${githubDelivery}) but it does not exist. Please check your configuration and redeliver the webhook event.`;
+        const logMessage = `Tried to execute CI ${githubEvent} command for "${repositoryBranchStr}" (${githubDelivery}) but it does not exist. Please check your configuration and redeliver the webhook event.`;
         console.warn('[server:post]'.yellow, '/webhook'.gray, logMessage);
         logger(logMessage, 'warn');
         next(500);
