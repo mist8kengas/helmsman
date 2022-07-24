@@ -4,7 +4,10 @@ const router = Router();
 import 'colors';
 import { exec } from 'child_process';
 import { createHmac, timingSafeEqual } from 'crypto';
-import readCiCdExec from '../../utils/readCiCdExec.js';
+import readCiCdExec, {
+    EXEC_RESPONSE,
+    EXEC_RESPONSE_MAP,
+} from '../../utils/readCiCdExec.js';
 import logger from '../../utils/logger.js';
 
 // import .env
@@ -57,8 +60,8 @@ router.post('/', (req, _, next) => {
     );
     const repositoryBranchStr = `${payloadBody.repository.full_name}: ${payloadBody.ref}`;
     if (ciCdExec) {
-        if (ciCdExec == 'bad_config') {
-            const logMessage = `An error occurred while executing the ${githubEvent} command for "${repositoryBranchStr}" (${githubDelivery}): ${ciCdExec}`;
+        if (typeof ciCdExec != 'string') {
+            const logMessage = `An error occurred while executing the ${githubEvent} command for "${repositoryBranchStr}" (${githubDelivery}): ${EXEC_RESPONSE_MAP[ciCdExec]}`;
             console.error('[server:post]'.red, '/webhook'.gray, logMessage);
             logger(logMessage, 'error');
             return next(500);
